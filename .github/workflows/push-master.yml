@@ -1,0 +1,40 @@
+name: Master
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  master:
+    strategy:
+      matrix:
+        step: ['build:release']
+    name: ${{ matrix.step }}
+    if: "! contains(github.event.head_commit.message, '[CI Skip]') && github.repository == 'polkadot-js/extension'"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        token: ${{ secrets.GH_PAT }}
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - name: ${{ matrix.step }}
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        GH_PAT: ${{ secrets.GH_PAT }}
+        GH_TOKEN: ${{ secrets.GH_PAT }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      run: |
+        yarn install --immutable | grep -v 'YN0013'
+        yarn ${{ matrix.step }}
+
+  dummy:
+    name: Dummy
+    if: "contains(github.event.head_commit.message, '[CI Skip]')"
+    runs-on: ubuntu-latest
+    steps:
+    - name: dummy
+      run: |
+        echo "Dummy skip step"
